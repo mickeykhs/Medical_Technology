@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace : xml파일은 여러개일 수 있음. 
+이를 구별하기 위한 식별 용도로 사용 -->
+<mapper namespace="kr.or.ddit.mapper.NoteMapper">
+	
+
+	<insert id="noteRegedit" parameterType="noteVO">
+		INSERT INTO NOTE(NT_CD, NT_DT, PA_NO, DIS_CD, DOCU_CD, CTF_NO, NT_PMT_PRICE, NT_USE, NT_VIEW) 
+		VALUES ((SELECT NVL(MAX(to_number(NT_CD)),0)+1 from NOTE), SYSDATE, #{paNo}, 
+				#{disCd}, #{docuCd}, 
+				(select max(b.ctf_no)
+				from CERTIFICATE_ORDER a, medical_document b
+				where a.ctf_no = b.ctf_no
+				and b.docu_cd = 'note'
+				and b.docu_dt >= SYSDATE-1) , 
+				#{ntPmtPrice}, #{ntUse}, #{ntView})
+	</insert>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+

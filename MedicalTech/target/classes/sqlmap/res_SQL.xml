@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.ResMapper">
+
+	<insert id="saveMent" parameterType="resVO">
+		INSERT INTO
+		RE_SMS(RE_NO,RE_TITLE,RE_CONT)
+		VALUES((SELECT NVL(MAX(RE_NO)+1,1) FROM RE_SMS),
+		#{reTitle},#{reCont})
+	</insert>
+	
+	<select id="getMent" resultType="resVO">
+		SELECT RE_NO,RE_TITLE,RE_CONT
+		FROM RE_SMS
+		ORDER BY RE_NO ASC
+	</select>
+	
+	<delete id="deleteMent" parameterType="resVO">
+		DELETE FROM RE_SMS 
+		WHERE RE_NO = #{reNo} 
+	</delete>
+	
+	<update id="updateMent" parameterType="resVO">
+		UPDATE RE_SMS
+		SET RE_TITLE=#{reTitle}, RE_CONT=#{reCont}
+		WHERE RE_NO = #{reNo}
+	</update>
+</mapper>

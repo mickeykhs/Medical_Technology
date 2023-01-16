@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 
+	[마이바티스] 스프링에서 "_"를 사용한 컬럼명을 사용 시(BOOK 테이블의 BOOK_ID)
+	카멜케이스로 읽어줌(bookId)
+	ex) 테이블 컬러명이 member_id인 경우 jsp화면단에서 이 값을 사용 시 memberId로 사용
+	-->
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	<!-- 자주 사용하는 타입의 별칭을 세팅 -->
+	<typeAliases>
+		<typeAlias type="kr.or.ddit.nur_schedule.NurVO" alias="nurVO"/>
+		<typeAlias type="kr.or.ddit.emp.EmpVO" alias="empVO"/>
+		<typeAlias type="kr.or.ddit.job.JobVO" alias="jobVO"/>
+		<typeAlias type="kr.or.ddit.notice.NoticeVO" alias="noticeVO"/>
+		<typeAlias type="kr.or.ddit.patient.PatientVO" alias="patientVO"/>
+		<typeAlias type="kr.or.ddit.order_list.OrdVO" alias="ordVO"/>
+		<typeAlias type="kr.or.ddit.doc_schedule.DsVO" alias="dsVO"/>
+		<typeAlias type="kr.or.ddit.chart.ChartVO" alias="chartVO"/>
+		<typeAlias type="kr.or.ddit.drug_order.DrorVO" alias="drorVO"/>
+		<typeAlias type="kr.or.ddit.drug_stock_detail.DrsdVO" alias="drsdVO"/>
+		<typeAlias type="kr.or.ddit.file.FileVO" alias="fileVO" />
+		<typeAlias type="kr.or.ddit.examination.ExaminationVO" alias="examinationVO" />
+		<typeAlias type="kr.or.ddit.com_code_detail.CcdVO" alias="ccdVO" />
+		<typeAlias type="kr.or.ddit.test_order.ToVO" alias="toVO" />
+		<typeAlias type="kr.or.ddit.receipt.RcpVO" alias="rcpVO" />
+		<typeAlias type="kr.or.ddit.doc_office.DoVO" alias="doVO" />
+		<typeAlias type="kr.or.ddit.drug_indent.DriVO" alias="driVO"/>
+		<typeAlias type="kr.or.ddit.durg_detail.DrugDetailVO" alias="drugDetailVO"/>
+		<typeAlias type="kr.or.ddit.pre_record.PrVO" alias="prVO"/>
+		<typeAlias type="kr.or.ddit.sms.SmsVO" alias="smsVO"/>
+		<typeAlias type="kr.or.ddit.re_sms.ResVO" alias="resVO"/>
+		<typeAlias type="kr.or.ddit.acceptance.AcceptanceVO" alias="acceptanceVO"/>
+		<typeAlias type="kr.or.ddit.certificate_order.CtforVO" alias="ctforVO"/>
+		<typeAlias type="kr.or.ddit.receiption.RecVO" alias="recVO"/>
+		<typeAlias type="kr.or.ddit.authority.EmpAuthVO" alias="empAuthVO"/>	
+		<typeAlias type="kr.or.ddit.diagnosis.DiaVO" alias="diaVO"/>
+		<typeAlias type="kr.or.ddit.note.NoteVO" alias="noteVO"/>
+		<typeAlias type="kr.or.ddit.prescription.PresVO" alias="presVO"/>
+		<typeAlias type="kr.or.ddit.drugapi.DrgVO" alias="drgVO"/>
+		<typeAlias type="kr.or.ddit.chat.ChatVO" alias="chatVO"/>
+		<typeAlias type="kr.or.ddit.chat.ChatRoomVO" alias="chatRoomVO"/>
+		
+		<!-- 보험여부 -->
+		<typeAlias type="kr.or.ddit.insurere.InsurereVO" alias="insurereVO"/>
+		
+	</typeAliases>
+	
+</configuration>
+
+
+
+
+
+
+

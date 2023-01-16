@@ -1,0 +1,15 @@
+1. JSP 페이지에 쿠키를 설정하는 메소드, 설정된 쿠키 정보를 얻어오는 메소드는 무엇인가?
+
+쿠키를 생성하는 메소드
+Cookie cookie = new Cookie(name, value);
+
+쿠키를 설정하는 메소드
+response.addCookie(cookie);
+
+설정된 쿠키 정보를 얻어오는 메소드
+getName()
+getValue()
+
+2. 설정된 쿠키를 삭제하는 기법은 무엇인가?
+
+setMaxAge() 메소드에 유효 시간을 0으로 설정해서 쿠키를 삭제 유효시간은 초단위로 설정함

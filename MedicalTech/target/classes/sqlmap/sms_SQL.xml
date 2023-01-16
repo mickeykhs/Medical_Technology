@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.SmsMapper">
+	
+	<insert id="recordSMS" parameterType="map">
+		INSERT INTO
+		SMS(SMS_CD,SMS_CONT,SMS_SD_DATE,PA_NO)
+		VALUES((SELECT NVL(MAX(SMS_CD)+1,1) FROM SMS),
+		#{smsCont},sysdate,#{paNo})
+	</insert>
+
+	<!-- 검색으로 환자 조회 -->
+	<select id="paSearch" parameterType="patientVO" resultType="patientVO">
+		SELECT PA_NO,PA_NAME, PA_PH, PA_REG
+ 		FROM   PATIENT
+ 		WHERE  PA_NAME LIKE '%' || #{paName} || '%'
+ 	</select>
+ 	
+ 	<select id="smsList" resultType="smsVO">
+ 		SELECT S.SMS_CD,S.SMS_CONT,S.SMS_SD_DATE,S.PA_NO,P.PA_NAME,P.PA_PH
+ 		FROM SMS S,PATIENT P
+        WHERE S.PA_NO = P.PA_NO
+        ORDER BY SMS_CD DESC
+ 	</select>
+ 	
+ 	<select id="searchDate" parameterType="smsVO" resultType="smsVO">
+ 		SELECT S.SMS_CD,S.SMS_CONT,S.SMS_SD_DATE,S.PA_NO,P.PA_NAME,P.PA_PH
+ 		FROM SMS S,PATIENT P
+        WHERE S.PA_NO = P.PA_NO
+        AND SMS_SD_DATE = #{smsSdDate}
+        ORDER BY SMS_CD DESC
+ 	</select>
+
+</mapper>

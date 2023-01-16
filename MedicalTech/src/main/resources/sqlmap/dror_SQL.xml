@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.DrorMapper">
+
+	<!-- 주문요청 -->
+	<insert id="drOrder">
+		INSERT INTO DRUG_ORDER 
+		(DROR_SEQ, DROR_CD,DROR_QTY,DROR_GUBUN,DROR_ORDT,IDT_REQ_NUR,DR_CD)
+		VALUES(
+		#{drorSeq},
+		#{drorCd},
+		#{drorQty},
+		#{drorGubun},
+		SYSDATE,
+		#{idtReqNur},
+		#{drCd}
+		)
+	</insert>
+
+	<!-- 주문요청시 사용하는 시퀀스 -->
+	<select id="getDrorCd" resultType="int">
+		SELECT NVL(MAX(to_number(DROR_CD)),0)+1 from DRUG_ORDER
+	</select>
+
+	<!-- 주문 내역 불러오기 -->
+	<select id="drorList" resultType="drorVO">
+        SELECT D.DROR_CD,D.DROR_PRICE,D.DROR_QTY,D.DROR_GUBUN,D.DROR_ORDT,D.IDT_REQ_NUR,D.DR_CD,D.DROR_SEQ,
+        S.DSD_NAME,S.DSD_COM,E.EMP_NAME
+   		FROM DRUG_ORDER D,DRUG_STOCK_DETAIL S,EMP E
+	    WHERE D.DR_CD = S.DR_CD
+	    AND  D.IDT_REQ_NUR = E.EMP_NO
+        order by TO_NUMBER(dror_cd) desc
+	</select>
+	
+
+</mapper>

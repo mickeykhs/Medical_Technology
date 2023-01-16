@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.DrsdMapper">
+	
+	<!-- 약품재고 리스트 -->
+	<select id="list" resultType="drsdVO">
+		SELECT DR_CD, DSD_NAME, DSD_COM, DSD_QTY,DSD_MS_QTY,DSD_GUBUN
+		FROM
+		DRUG_STOCK_DETAIL
+	</select>
+
+	<!-- 약품재고 리스트 검색 -->
+	<select id="searchDrsd" parameterType="drsdVO" resultType="drsdVO">
+		SELECT DR_CD, DSD_NAME, DSD_COM, DSD_QTY, DSD_MS_QTY,DSD_GUBUN
+		FROM
+		DRUG_STOCK_DETAIL
+		WHERE 1=1
+		AND (DSD_NAME LIKE '%' || #{dsdName} || '%'
+				OR DSD_COM LIKE '%' || #{dsdCom} || '%')
+	</select>
+	
+	<!-- List<DrsdVO> voList -->
+	<update id="updateDrsd" parameterType="java.util.List">
+		<foreach collection="list" index="index" item="drsdVO" open="DECLARE BEGIN" separator=";" close="; END;">
+			UPDATE 
+				DRUG_STOCK_DETAIL
+			SET 
+				DSD_QTY = DSD_QTY + #{drsdVO.dsdQty}
+			where 
+				DR_CD = #{drsdVO.drCd}
+		</foreach>
+	</update>
+</mapper>

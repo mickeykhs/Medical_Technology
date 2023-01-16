@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace : xml파일은 여러개일 수 있음. 이를 구별하기 위한 식별 용도로 사용 -->
+<mapper namespace="kr.or.ddit.mapper.AdministrativeMapper">
+	<resultMap type="patientVO" id="patientMap">
+		<result property="paNo" column="PA_NO" />
+		<result property="paReg" column="PA_REG" />
+		<result property="paName" column="PA_Name" />
+		<result property="paSex" column="PA_SEX" />
+		<result property="paPh" column="PA_PH" />
+		
+		<result property="paFiviDt" column="PA_FIVI_DT" />
+		<result property="paMail" column="PA_MAIL" />
+		
+		<result property="paAdd1" column="PA_Add1" />
+		<result property="paAdd2" column="PA_Add2" />
+		<result property="paZip" column="PA_Zip" />
+		<result property="paEndt" column="PA_ENDT" />
+		<result property="paEnwt" column="PA_ENWT" />
+		<result property="paUpdt" column="PA_UPDT" />
+		<result property="paUpwt" column="PA_UPWT" />
+		<result property="paTrmr" column="PA_TRMR" />
+		<result property="paState" column="PA_STATE" />
+
+		<collection property="doVO" resultMap="doVOMap"></collection>
+		<collection property="rcpVO" resultMap="rcpVOMap"></collection>
+		
+		<!-- 제증명 관련 -->
+		<collection property="diaVO" resultMap="diaVOMap"></collection>
+		<collection property="noteVO" resultMap="noteVOMap"></collection>
+		<collection property="presVO" resultMap="preVOMap"></collection>
+		<collection property="drgVO" resultMap="drgVOMap"></collection>
+		<collection property="fileVO" resultMap="fileVOMap"></collection>
+	</resultMap>
+	
+	<resultMap type="drgVO" id="drgVOMap">
+		<result property="drCd" column="DR_CD" />
+		<result property="drAmt" column="DR_AMT" />
+		<result property="drCnt" column="DR_CNT" />
+		<result property="drCom" column="DR_COM" />
+		<result property="drName" column="DR_NAME" />
+		<result property="drUse" column="DR_USE" />
+		<result property="drQty" column="DR_QTY" />
+		<result property="drPrice" column="DR_PRICE" />
+		
+	</resultMap>
+	<resultMap type="fileVO" id="fileVOMap">
+		<result property="fileName" column="FILE_NAME" />
+	</resultMap>
+
+
+	<resultMap type="diaVO" id="diaVOMap">
+		<result property="diaCd" column="DIA_CD" />
+		<result property="chDocnm" column="CH_DOCNM" />
+		<result property="diaDt" column="DIA_DT" />
+		<result property="paNo" column="PA_NO" />
+		<result property="disCd" column="DIS_CD" />
+		<result property="docuCd" column="DOCU_CD" />
+		<result property="ctfNo" column="CTF_NO" />
+		<result property="diaPmtPrice" column="DIA_PMT_PRICE" />
+		<result property="diaCont" column="DIA_CONT" />
+		<result property="diaUse" column="DIA_USE" />
+		<result property="diaEndt" column="DIA_ENDT" />
+	</resultMap>
+	
+	<resultMap type="noteVO" id="noteVOMap">
+	
+		<result property="ntCd" column="NT_CD" />
+		<result property="ntDt" column="NT_DT" />
+		<result property="paNo" column="PA_NO" />
+		<result property="disCd" column="DIS_CD" />
+		<result property="fileAtchNo" column="FILE_ATCH_NO" />
+		<result property="docuCd" column="DOCU_CD" />
+		<result property="ctfNo" column="CTF_NO" />
+		<result property="ntPmtPrice" column="NT_PMT_PRICE" />
+		<result property="ntUse" column="NT_USE" />
+		<result property="ntView" column="NT_VIEW" />
+	</resultMap>
+	
+	<resultMap type="presVO" id="preVOMap">
+		<result property="preCd" column="PRE_CD" /> 
+		<result property="resDt" column="RES_DT" />
+		<result property="ctfNo" column="DOCU_CD" />
+		<result property="ctfNo" column="CTF_NO" />
+		<result property="paNo" column="PA_NO" />
+		<result property="preShot" column="PRE_SHOT" />
+		<result property="preDays" column="PRE_CNT" />
+		<result property="preCnt" column="PRE_DAYS" />
+		<result property="drCd" column="DR_CD" />
+	</resultMap>
+	
+	
+	
+	<resultMap type="doVO" id="doVOMap">
+		<result property="docCd" column="DOC_CD" />
+		<result property="empNo" column="EMP_NO" />
+		<result property="docNo" column="DOC_NO" />
+	</resultMap>
+
+	<resultMap type="rcpVO" id="rcpVOMap">
+		<result property="paNo" column="PA_NO" />
+		<result property="docCd" column="DOC_CD" />
+		<result property="rcpMemo" column="RCP_MEMO" />
+		<result property="rcpTm" column="RCP_TM" />
+		<result property="rcpNo" column="RCP_NO" />
+	</resultMap>
+	
+	<!-- 보험가입 여부 확인 -->
+	<select id="inCheck" resultType="insurereVO" parameterType="String">
+	SELECT  IN_NAME
+	,       IN_REG
+	FROM INSURERE
+	WHERE IN_REG  LIKE #{inReg} || '%'
+	
+	</select>
+	
+	<!-- 월별 매출 차트 조회 -->
+	<select id="monChart" resultType="hashMap">
+		SELECT   EXTRACT (MONTH FROM REC_DT) 
+				,SUM(REC_TOTAL) 
+		FROM RECEIPTION
+		WHERE EXTRACT (YEAR FROM REC_DT) =2022 
+		GROUP BY EXTRACT (MONTH FROM REC_DT)
+		ORDER BY EXTRACT (MONTH FROM REC_DT) ASC
+	</select>
+	
+	<!-- 월별 환자 수  -->
+	<select id="perChart" resultType="hashMap">
+		SELECT EXTRACT (MONTH FROM PD_TM) 
+		,      COUNT(PD_NUM) 
+		FROM PADUMMY
+		WHERE EXTRACT (YEAR FROM PD_TM) =2022 
+		GROUP BY EXTRACT (MONTH FROM PD_TM)
+		ORDER BY EXTRACT (MONTH FROM PD_TM) ASC
+	
+	</select>
+	
+	<!-- 재진 초진 환자수 차트   -->
+	<select id="paChart" resultType="hashMap">
+	
+		SELECT MAX(RCP_FV)
+		,      MAX (RCP_ME)
+		FROM RECEIPT
+			
+	</select>
+	
+	
+	<!-- 환자 진단서  조회-->
+	<select id="diagSelect" parameterType="patientVO" resultMap="patientMap">
+		SELECT   A.DIS_CD   
+		        ,A.DIA_DT   
+		        ,A.DIA_ENDT 
+		        ,A.DIA_USE  
+		        ,A.DIA_CONT 
+		        ,A.CH_DOCNM
+		        ,B.PA_ADD1
+		        ,B.PA_SEX
+		        ,B.PA_NAME 
+		        ,B.PA_REG
+		        ,B.PA_NO
+		FROM DIAGNOSIS A , PATIENT B
+		WHERE A.PA_NO = B.PA_NO
+		AND A.PA_NO = 	#{paNo}
+		AND A.DOCU_CD = #{docuCd}
+	
+	</select>
+	
+	<!-- 환자 소견서 조회 -->
+	<select id="noteSelect" parameterType="patientVO" resultMap="patientMap">
+	   SELECT   A.NT_USE 
+			   ,A.NT_VIEW
+		       ,A.FILE_ATCH_NO         
+		       ,B.PA_ADD1
+		       ,B.PA_SEX
+		       ,B.PA_NAME 
+		       ,B.PA_REG
+		       ,B.PA_NO
+               ,C.EXAM_CD
+               ,D.FILE_NAME
+		FROM NOTE A , PATIENT B, EXAMINATION C , ATTACH_FILE D
+		WHERE A.PA_NO = B.PA_NO
+        AND A.PA_NO = C.PA_NO
+        AND C.EXAM_CD = D.ANY_CD
+		AND A.PA_NO = 	#{paNo}      
+		AND A.DOCU_CD = #{docuCd}  
+	
+	</select>
+	
+	<!-- 환자 처방전 조회 -->
+	<select id="preSelect" parameterType="patientVO" resultMap="patientMap">              
+		SELECT   A.PRE_SHOT 	
+		        ,A.PRE_CNT		
+		        ,A.PRE_DAYS 	
+		        ,A.DR_CD 		
+		        ,C.DR_NAME		
+		        ,B.PA_NAME      
+		        ,B.PA_REG
+		        ,B.PA_NO		            
+		FROM PRESCRIPTION A , PATIENT B , DRUG_API C
+		WHERE A.PA_NO = B.PA_NO
+		AND A.DR_CD = C.DR_CD
+		AND A.PA_NO =  #{paNo}      
+		AND A.DOCU_CD = #{docuCd}  
+	
+	</select>
+	
+	
+	<!-- 환자 수정 -->
+	<update id="paUpdate" parameterType="patientVO">
+		UPDATE PATIENT
+		SET   PA_PH=#{paPh}
+			 ,PA_ADD1=#{paAdd1}
+			 ,PA_ADD2=#{paAdd2}
+			 ,PA_ZIP=#{paZip}
+			 ,PA_UPWT=#{paUpwt}
+		WHERE PA_NAME = #{paName}
+	
+	</update>
+	
+	<!-- 신규 환자등록 -->
+	<insert id="paInsert" parameterType="patientVO">
+<!-- 		<selectKey order="BEFORE" keyProperty="paTrmr" resultType="string"> -->
+<!-- 			SELECT NVL(PA_NAME,'NULL') -->
+<!-- 			FROM PATIENT -->
+<!-- 			WHERE PA_NAME =#{paName} -->
+<!-- 		</selectKey> -->
+	INSERT INTO PATIENT(PA_NO
+					  , PA_REG
+					  , PA_NAME
+					  , PA_SEX
+					  , PA_PH
+					  , PA_ADD1
+					  , PA_ADD2
+					  , PA_ZIP
+					  , PA_ENDT
+					  , PA_STATE
+					  <if test="paRes != null">
+						, PA_RES
+					  </if>
+					  <if test="paTrmr != null">
+						, PA_TRMR
+					  </if>
+					  , PA_ENWT
+					   <if test="paInsuYn != null">
+					  , PA_INSU_YN
+			          </if>
+			          )
+	VALUES ((SELECT NVL(MAX(PA_NO),0) + 1 FROM PATIENT)
+	          ,	#{paReg}
+	          ,	#{paName}
+	          ,	#{paSex}
+	          ,	#{paPh}
+	          ,#{paAdd1}
+	          , #{paAdd2}
+	          ,	#{paZip}
+	          ,SYSDATE	         
+	          ,'대기중'
+	         <if test="paRes != null">
+	         	,#{paRes}
+	         </if>
+	          <if test="paTrmr != null">
+				,#{paTrmr}
+			  </if>
+	          ,#{paEnwt}
+	           <if test="paInsuYn != null">
+	          ,#{paInsuYn}
+	          </if>)
+	          
+	</insert>
+	
+	
+	<!-- 환자 조회 -->
+	<select id="patientList" resultType="patientVO">
+		SELECT A.PA_NO
+			,  A.PA_REG
+			,  A.PA_NAME
+			,  A.PA_ADD1
+			,  A.PA_ADD2
+			,  A.PA_STATE
+			,  A.PA_TRMR
+			,  A.PA_SEX
+			,  A.PA_PH
+			,  A.PA_ZIP
+		FROM  PATIENT A, RECEIPT R
+		WHERE A.PA_NO = R.PA_NO                
+		AND   A.PA_STATE = '대기중'
+		AND   TO_CHAR(R.RCP_TM, 'YY/MM/DD') = TO_CHAR(SYSDATE, 'YY/MM/DD')
+		ORDER BY PA_UPDT ASC
+	</select>
+
+	<!-- 진료실 조회 -->
+	<select id="doSelect" parameterType="patientVO"
+		resultMap="patientMap">
+		SELECT  ROWNUM NUM 
+		     , A.DOC_NO
+		     , C.PA_NO
+		     , C.PA_NAME
+		     , C.PA_REG
+		     , C.PA_TRMR
+		     , C.PA_STATE
+		     , C.PA_SEX
+		     , C.PA_PH
+		     , B.RCP_MEMO
+		FROM DOC_OFFICE A, Receipt B, Patient C
+		where A.DOC_CD = B.DOC_CD
+		AND   B.PA_NO = C.PA_NO
+		AND A.DOC_NO = #{docNo}
+		ORDER BY DECODE(C.PA_STATE, #{paState}, 1)
+		, B.RCP_TM ASC
+	</select>
+
+	<!-- 환자 접수 검색 -->
+	<select id="searchPa" parameterType="patientVO"
+		resultMap="patientMap">
+		SELECT   ROWNUM NUM
+	       , A.PA_NO
+	       , A.PA_REG
+	       , A.PA_ZIP
+	       , A.PA_ADD1
+	       , A.PA_ADD2
+	       , A.PA_NAME
+	       , A.PA_PH
+	       , A.PA_SEX
+	       , A.PA_TRMR
+	       , A.PA_ENWT
+	       , B.RCP_MEMO
+		FROM PATIENT A LEFT OUTER JOIN RECEIPT B ON(A.PA_NO = B.PA_NO)
+		WHERE A.PA_NAME LIKE '%' || #{paName} || '%'
+	</select>
+	
+
+	<!--1) 진료실 입력, 진료실(doc_office)에 insert(진료실번호, 로그인한직원번호) -->
+	<insert id="doInsert" parameterType="doVO">
+		<selectKey order="BEFORE" keyProperty="docCd"
+			resultType="String">
+			SELECT SUBSTR(MAX(DOC_CD),1,1) || TRIM(TO_CHAR(SUBSTR(NVL(MAX(DOC_CD),'O000'),2) + 1,'000'))
+			FROM   DOC_OFFICE
+		</selectKey>
+
+		INSERT INTO DOC_OFFICE(DOC_CD, EMP_NO, DOC_NO) VALUES(#{docCd}
+		,#{empNo}, #{docNo})
+	</insert>
+
+	<!-- 2) 접수(receipt)에 insert(환자번호, 증상메모) -->
+	<insert id="reInsert" parameterType="rcpVO">
+	
+		INSERT INTO RECEIPT(  PA_NO
+							, DOC_CD
+							, RCP_MEMO
+							, RCP_TM
+							, RCP_NO 
+							<if test='paTrmr == "N"'>
+								, RCP_FV
+					  		</if>
+					  		<if test='paTrmr == "Y"'>
+								, RCP_ME
+					  		</if> 
+					  		)
+		VALUES(  #{paNo}
+				,#{docCd}
+				,#{rcpMemo}
+				,SYSDATE,(SELECT NVL(MAX(RCP_NO),0) + 1 FROM RECEIPT)
+				<if test='paTrmr == "N"'>
+					,(SELECT MAX(RCP_FV)+1 FROM RECEIPT)
+				</if>
+				<if test='paTrmr == "Y"'>
+					,(SELECT MAX(RCP_ME)+1 FROM RECEIPT)
+				</if>
+			   )
+		
+	</insert>
+	
+	<!-- 예약환자 상태 바꾸기 -->
+	<update id="paResUpdate" parameterType="patientVO">
+		UPDATE  PATIENT
+		SET PA_STATE = '대기중'
+		WHERE PA_NO =#{paNo}
+	</update>
+	
+	<!-- 간호사 주문요청 목록 -->
+	<select id="nurOrderList" resultType="drorVO">
+		SELECT  ROWNUM NUM
+               , D.DROR_CD
+               ,D.DROR_PRICE
+               ,D.DROR_QTY
+               ,D.DROR_GUBUN
+               ,D.DROR_ORDT
+               ,D.IDT_REQ_NUR
+               ,D.DR_CD
+               ,D.DROR_SEQ
+               ,S.DSD_NAME
+               ,S.DSD_COM
+               ,E.EMP_NAME
+               ,D.DROR_ORDT
+   		FROM DRUG_ORDER D,DRUG_STOCK_DETAIL S,EMP E
+	    WHERE D.DR_CD = S.DR_CD
+	    AND  D.IDT_REQ_NUR = E.EMP_NO
+	    ORDER BY D.DROR_ORDT DESC
+	</select>
+	
+	<!-- 발주등록 내역  -->
+	<select id="drugList" resultType="driVO">
+		SELECT   A.DI_CD
+		       , A.DI_DT
+		       , B.EMP_NAME
+		       , B.EMP_PH
+		FROM DRUG_INDENT A, EMP B
+		WHERE A.IDT_APL_AST =B.EMP_NO
+		ORDER BY DI_DT DESC
+	</select>
+	
+	<!-- 발주 등록 -->
+	<insert id="driInsert" parameterType="driVO">
+		<selectKey order="BEFORE" keyProperty="diCd" resultType="string">
+			SELECT SUBSTR(MAX(DI_CD),1,1) || TRIM(TO_CHAR(SUBSTR(NVL(MAX(DI_CD),'Z000'),2) + 1,'000'))FROM DRUG_INDENT
+		</selectKey>
+		INSERT
+		INTO DRUG_INDENT(DI_CD, DI_DT, IDT_APL_AST)
+		VALUES( #{diCd}
+		        ,SYSDATE
+		        ,#{idtAplAst})
+	</insert>	
+	
+	<!-- 발주 상세 등록  -->		
+	<update id="drugDetailInsert" parameterType="java.util.List">
+	    <foreach collection="list" item="item" index="index"  open="INSERT ALL" separator=" " close="SELECT * FROM DUAL">
+	    	INTO DRUG_DETAIL (DI_CD, DD_NO, DD_QTY, DR_CD) 
+	    	VALUES(
+	    		  #{item.diCd}
+	    		, #{item.ddNo}
+	    		, #{item.ddQty}
+	    		, #{item.drCd}
+	    		)
+	    </foreach>
+	</update>
+	
+	<!-- 발주 신청시 약품삭제  -->
+	<delete id="drugDelete" parameterType="java.util.List">
+			DELETE 
+			FROM DRUG_ORDER
+		<where>
+			<foreach collection="list" item="item" open="" close=""
+				separator="OR">
+				(
+				DR_CD = #{item.drCd}
+				)
+			</foreach>
+		</where>
+	</delete>
+	
+	<!-- 발주등록 상세내역  -->
+	<select id="checkOrder" parameterType="driVO" resultType="driVO">
+			SELECT    A.DD_QTY
+		        , A.DR_CD
+		        , B.DI_DT
+		        , B.DI_CD
+		        , C.DSD_NAME
+		        , D.EMP_NAME
+		        , C.DSD_COM
+		FROM DRUG_DETAIL A, DRUG_INDENT B, DRUG_STOCK_DETAIL C, EMP D
+		WHERE A.DI_CD = B.DI_CD
+		AND A.DR_CD=C.DR_CD
+		AND  B.IDT_APL_AST = D.EMP_NO 
+		AND B.DI_CD = #{diCd}
+	</select>
+	
+	<!-- 예약환자 날짜별 검색 -->
+	<select id="reservation" parameterType="patientVO" resultType="patientVO">
+			SELECT    PA_NO
+				 ,PA_NAME 
+				 ,PA_REG
+		         ,PA_STATE
+		         ,PA_RES
+		         ,PA_ADD1
+		         ,PA_ADD2
+		         ,PA_TRMR
+		FROM PATIENT 
+		WHERE PA_STATE = '예약'		
+		<if test="testDate != null">
+		 AND TO_CHAR(PA_RES, 'YYYY-MM-DD') = #{testDate}
+		</if>
+		ORDER BY PA_RES 
+	</select>
+	
+	<!-- 제증명 신청  -->
+	<insert id="ctfInsert" parameterType="ctforVO">
+	INSERT INTO CERTIFICATE_ORDER(CTF_NO, PR_CD, CTF_GUBUN,  CTF_ENDT, CTF_PAST, CTF_STATE, CTF_NAME, EMP_NAME, PA_NO)
+	VALUES(
+        (SELECT NVL(MAX(CTF_NO),0)+1 FROM CERTIFICATE_ORDER)
+        ,(SELECT MAX(PR_CD)FROM PRE_RECORD)
+        , #{ctfGubun}
+        , SYSDATE
+        ,  #{ctfPast}
+        , #{ctfState}
+        , #{ctfName}
+        , #{empName}
+        , #{paNo}
+		)
+	
+	</insert>
+	
+	<!-- 제증명 신청시 의료문서 INSERT -->
+	<insert id="mediDocuInsert" parameterType="ctforVO">
+		INSERT INTO 
+		MEDICAL_DOCUMENT(DOCU_CD 
+						, CTF_NO
+						, DOCU_DT)
+		VALUES(  #{ctfGubun}
+				, (SELECT MAX(CTF_NO) FROM CERTIFICATE_ORDER)
+				, SYSDATE)
+	</insert>
+	
+	<!-- 제증명 신청내역  -->
+	<select id="ctfOrder" resultType="ctforVO" parameterType="ctforVO">
+			SELECT   
+		      A.CTF_GUBUN
+		    , A.CTF_NAME
+		    , A.CTF_ENDT
+		    , A.EMP_NAME
+		    , A.CTF_STATE   
+		    , B.PA_NO
+		FROM CERTIFICATE_ORDER A, PATIENT B
+		WHERE A.PA_NO = B.PA_NO
+		ORDER BY DECODE(A.CTF_STATE, #{ctfState}, 1)
+		,CTF_ENDT DESC 
+	</select>
+	
+	<!--  제증명 상세신청내역 -->
+	<select id="ctfDetailOrder" parameterType="ctforVO" resultType="ctforVO">
+		SELECT   
+	          CTF_GUBUN
+	        , CTF_NAME
+	        , CTF_ENDT
+	        , EMP_NAME
+	        , CTF_STATE
+		FROM CERTIFICATE_ORDER
+		WHERE CTF_ENDT BETWEEN TO_DATE(#{ctfEndt}, 'YYYY-MM-DD') 
+                   AND TO_DATE(SYSDATE+1)
+		<if test="ctfGubun != null">
+			AND CTF_GUBUN LIKE '%' || #{ctfGubun} || '%'
+		</if>
+		ORDER BY DECODE(CTF_STATE, #{ctfState}, 1)
+		,CTF_ENDT DESC 
+	</select>
+	
+	<select id="docList" parameterType="empVO" resultType="empVO">
+		SELECT    EMP_NAME
+				, EMP_NO
+		FROM EMP
+		WHERE JOB_GUBUN= #{jobGubun}
+	
+	</select>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+

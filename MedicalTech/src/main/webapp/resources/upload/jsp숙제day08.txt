@@ -1,0 +1,25 @@
+1. 예외 처리란 무엇인가?
+
+예외가 발생했을 때를 대비하여 에러발생 페이지로 이동하게 하는 것을 예외처리라고 한다.
+
+
+2. page 디렉티브 태그를 이용한 예외 처리 기법에 사용되는 속성에 대해 설명하시오
+
+<%page errorPage=" ... " %>와 같이 errorPage 속성으로 오류 페이지를 호출하는 방식과 
+<%page isErrorPage="true" %> 와 같은 isErrorPage 속성으로 오류 페이지를 제작할 수 있다.
+
+3. web.xml 파일을 이용한 예외 처리 기법에 대해 설명하시오
+
+오류 코드에 따라 처리하는 방법
+404 , 500같은...
+
+예외 유형으로 오류 페이지를 호출할 수 있는 방법
+NullPointException , ClassNotFoundException 같은걸로....
+
+
+상위 = 페이지 디렉티브
+중위 = web.xml
+하위 = try{} catch{}
+
+try catch 보다 web.xml 이 우선순위를 가지고 
+web.xml 보다 page디렉티브가 우선순위를 갖는다.

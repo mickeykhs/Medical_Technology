@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.PrMapper">
+	
+	<!-- 처치대기 환자 조회 -->
+	<select id="waitList" resultType="patientVO">
+        SELECT DISTINCT 
+            P.PA_NAME,P.PA_REG,P.PA_NO
+		FROM PATIENT P ,TEST_ORDER T,RECEIPT R
+		WHERE (T.TO_GUBUN='주사' OR  T.TO_GUBUN='내복')
+        AND P.PA_NO = T.PA_NO
+        AND P.PA_NO = R.PA_NO
+        AND R.RCP_TM > SYSDATE-1
+        AND (P.PA_STATE='검사완료' or p.pa_state='진료중')
+	</select>
+	
+	<!-- 처치환자 선택시 환자 정보 조회 -->
+	<!--AND P.PA_FIVI_DT = C.CH_DT-->
+	<select id="paInfo" parameterType="string" resultType="patientVO">
+        SELECT P.PA_NO, P.PA_NAME, P.PA_REG,P.PA_SEX, C.CH_CONT
+        FROM PATIENT P  , CHART C, RECEIPT R
+        WHERE P.PA_NO = C.PA_NO 
+        AND C.CH_NO = R.RCP_NO
+        AND R.RCP_TM > SYSDATE-1
+        AND P.PA_NO = #{paNo}
+	</select>
+	
+	<!-- 오더리스트 조회 -->
+	<select id="orderList" parameterType="toVO" resultType="toVO">
+        SELECT T.TO_GUBUN,T.PR_SHOT,T.PR_CNT,T.TO_DIS_CD,T.PA_NO,D.DR_NAME,D.DR_QTY
+		FROM TEST_ORDER T , DRUG_API D
+		WHERE T.TO_DIS_CD = D.DR_CD
+        AND (T.TO_GUBUN='주사' OR  T.TO_GUBUN='내복')
+        AND T.CH_NO = (SELECT MAX(CH_NO) FROM CHART WHERE PA_NO = #{paNo})
+		AND T.PA_NO = #{paNo}
+	</select>
+
+	<!-- 처치하면서 사용량 빼주기 -->
+	<update id="useQty" parameterType="map">
+		<foreach collection="voList" item="item" index="index" open="DECLARE BEGIN" separator=";" close="; END;"> 
+		   UPDATE   drug_stock_detail
+		   SET      dsd_qty=#{item.dsdQty}
+		   WHERE    dr_cd=#{item.drCd}
+		 </foreach>
+	</update>
+
+	<!-- 환자상태 처치완료로 바꾸기 -->
+	<update id="upState" parameterType="patientVO">
+		UPDATE PATIENT 
+		SET PA_STATE = '처치완료'
+		WHERE PA_NO = #{paNo}
+	</update>
+
+	<!-- 당일 처치완료한 목록 -->
+	<select id="finishList" resultType="patientVO">
+        SELECT DISTINCT 
+        P.PA_NAME,P.PA_REG,P.PA_NO,P.PA_FIVI_DT,R.RCP_TM
+		FROM PATIENT P ,TEST_ORDER T,RECEIPT R
+		WHERE P.PA_NO = R.PA_NO
+        AND P.PA_NO = T.PA_NO
+		AND (T.TO_GUBUN='주사' OR  T.TO_GUBUN='내복') 
+        AND R.RCP_TM > SYSDATE-1
+		AND (P.PA_STATE = '처치완료' or p.pa_state='진료완료' or p.pa_state='결제완료')
+	</select>
+	
+	<!-- 과거 처치 내역 가져오기 -->
+	<select id="pastTreatList" parameterType="toVO"  resultType="toVO">
+        SELECT T.TO_GUBUN,T.PR_SHOT,T.PR_CNT,T.PA_NO,D.DR_NAME,P.PA_FIVI_DT
+		FROM TEST_ORDER T , DRUG_API D,PATIENT P
+		WHERE T.TO_DIS_CD = D.DR_CD
+        AND (T.TO_GUBUN='주사' OR  T.TO_GUBUN='내복') 
+        AND P.PA_NO = T.PA_NO
+		AND T.PA_NO =  #{paNo}
+	</select>
+</mapper>

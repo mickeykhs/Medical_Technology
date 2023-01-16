@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace : xml파일은 여러개일 수 있음. 
+이를 구별하기 위한 식별 용도로 사용 -->
+<mapper namespace="kr.or.ddit.mapper.EmpMapper">
+	<resultMap type="patientVO" id="patientMap">
+		<result property="paNo" column="PA_NO" />
+		<result property="paReg" column="PA_REG" />
+		<result property="paName" column="PA_NAME" />
+		<result property="paSex" column="PA_SEX" />
+		<result property="paPh" column="PA_PH" />
+		<result property="paMail" column="PA_MAIL" />
+		<result property="paAdd1" column="PA_ADD1" />
+		<result property="paAdd2" column="PA_ADD2" />
+		<result property="paZip" column="PA_ZIP" />
+		<result property="paEndt" column="PA_ENDT" />
+		<result property="paEnwt" column="PA_ENWT" />
+		<result property="paUpdt" column="PA_UPDT" />
+		<result property="paUpwt" column="PA_UPWT" />
+		<result property="paFiviDt" column="PA_FIVI_DT" />
+		<result property="paTrmr" column="PA_TRMR" />
+		<result property="paState" column="PA_STATE" />
+		<collection property="chartVO" resultMap="chartMap"></collection>
+	</resultMap>
+	<resultMap type="chartVO" id="chartMap">
+		<result property="chNo" column="CH_NO" />
+		<result property="chCont" column="CH_CONT" />
+		<result property="chDt" column="CH_DT" />
+		<result property="chEndt" column="CH_ENDT" />
+	</resultMap>
+	<resultMap type="doVO" id="treatPaMap">
+		<result property="docCd" column="DOC_CD" />
+		<result property="docNo" column="DOC_NO" />
+		<collection property="rcpVO" resultMap="rcpMap"></collection>
+		<collection property="patientVO" resultMap="patientMap"></collection>
+	</resultMap>
+	<resultMap type="rcpVO" id="rcpMap">
+		<result property="rcpNo" column="RCP_NO" />
+		<result property="rcpTm" column="RCP_TM" />
+		<result property="rcpMemo" column="RCP_MEMO" />
+		<result property="docCd" column="DOC_CD" />
+		<result property="paNo" column="PA_NO" />
+	</resultMap>
+	
+	<!-- 환자상태 변경 -->
+	<update id="paStateUp" parameterType="patientVO">
+		UPDATE PATIENT
+		SET PA_STATE = #{paState}, PA_UPWT = #{paUpwt}
+		WHERE PA_NO = #{paNo}
+	</update>
+	<!-- 환자상태 변경2 -->
+	<update id="paStateUp2" parameterType="patientVO">
+		UPDATE PATIENT
+		SET PA_STATE = '진료완료', PA_UPWT = '진료완료' , PA_TRMR='Y' , PA_FIVI_DT = SYSDATE
+		WHERE PA_NO = #{paNo}
+	</update>
+	
+	<!-- (접수 및 진료)환자 목록 -->
+	<select id="treatPaList" resultMap="treatPaMap">
+		select p.PA_NO, p.PA_REG, p.PA_NAME, p.PA_UPWT, p.PA_UPDT,
+		       p.PA_SEX, p.PA_STATE, p.PA_ADD1, p.PA_ADD2, p.PA_PH, p.PA_MAIL, p.PA_FIVI_DT,
+		       r.PA_NO, r.DOC_CD, r.RCP_MEMO, r.RCP_TM, r.RCP_NO,
+		       d.doc_cd, d.doc_no
+		from   patient p , receipt r, doc_office d
+		where  p.pa_no = r.pa_no
+		and    D.DOC_CD = r.doc_cd
+		and    (p.pa_state = '대기중'	or p.pa_state = '진료중' or p.pa_state = '처치완료' or p.pa_state = '검사완료')
+		and    d.doc_no='2진료실'
+		and    r.rcp_tm > SYSDATE -1
+		order by p.pa_state ASC
+	</select>
+	<!-- 진료환자목록 차트정보list -->
+	<select id="chart" parameterType="string" resultType="chartVO">
+		SELECT CH_NO, CH_DIS_CD, CH_CONT, CH_DT, RCP_NO, PA_NO, EMP_NO, CH_ENDT
+		FROM CHART
+		WHERE PA_NO = #{paNo}
+		ORDER BY CH_ENDT ASC
+	</select>
+	<select id="paList" parameterType="string" resultType="patientVO">
+		<!-- 진료환자목록 환자정보list -->
+		SELECT PA_NO, PA_REG, PA_NAME, PA_SEX, PA_PH, PA_MAIL, PA_ADD1, 
+			   PA_ADD2, PA_ZIP, PA_ENDT, PA_ENWT, PA_UPDT, PA_UPWT, PA_TRMR, PA_FIVI_DT, PA_STATE
+		FROM PATIENT
+		WHERE PA_NO = #{paNo}
+	</select>
+	<!-- 진료환자목록 접수번호list -->
+	<select id="rcpList" parameterType="string" resultType="rcpVO">
+		SELECT PA_NO, DOC_CD, RCP_MEMO, RCP_TM, RCP_NO
+		FROM RECEIPT
+		WHERE RCP_TM > SYSDATE -1 
+		AND PA_NO = #{paNo}
+	</select>
+	
+	<!-- 직원(의사) 목록 -->
+	<select id="list" parameterType="string" resultType="empVO">
+		SELECT EMP_NO, EMP_PH, EMP_NAME, EMP_PW, EMP_IN, EMP_ENABLED, EMP_OUT, EMP_MAIL, EMP_REG, 
+			   EMP_ENDT, EMP_WT, EMP_UPDT, EMP_ZIP, EMP_ADD1, EMP_ADD2, EMP_FRLG_YN, JOB_CD, EMP_EXADD
+		FROM   EMP
+		WHERE  EMP_NO LIKE 'D' || '%'
+	
+	</select>
+
+	<!-- 환자 검색 -->
+	<select id="searchPa" parameterType="patientVO" resultMap="patientMap">
+	
+		SELECT P.PA_NO, P.PA_REG, P.PA_NAME, P.PA_SEX, P.PA_PH, P.PA_MAIL, P.PA_ADD1, P.PA_ADD2, P.PA_ZIP, P.PA_ENDT, P.PA_ENWT, 
+		       P.PA_UPDT, P.PA_UPWT, P.PA_FIVI_DT, P.PA_STATE, C.CH_NO, C.CH_CONT, C.CH_DT, C.CH_ENDT, R.RCP_MEMO 
+		FROM   PATIENT P LEFT OUTER JOIN CHART C ON(P.PA_NO = C.PA_NO)
+                 		 LEFT OUTER JOIN RECEIPT R ON(R.RCP_NO = C.CH_NO)
+		WHERE  P.PA_NAME LIKE '%' || #{paName} || '%'
+		ORDER BY C.CH_ENDT DESC
+	
+	</select>
+	
+	<!-- 회원가입 -->
+	<insert id="insert" parameterType="empVO">
+	 <selectKey keyProperty="empNo" resultType="String" order="BEFORE">
+	 
+		SELECT substr(#{empNo},0,1) || to_number(nvl(max(substr(EMP_NO,2,7)),10000) + 1) 
+		FROM   EMP
+		WHERE  EMP_NO like substr(#{empNo},0,1)||'%'
+		
+     </selectKey>
+		INSERT INTO EMP
+			       (EMP_NAME
+			      , EMP_MAIL
+			      , EMP_REG
+			      , EMP_ZIP
+			      , EMP_ADD1
+			      , EMP_ADD2
+			      , EMP_EXADD
+			      , EMP_PW
+			      , EMP_PH
+			      , EMP_NO
+			      , JOB_CD
+			      , JOB_GUBUN
+			      , EMP_IN
+			      , EMP_ENABLED
+			      , EMP_FRLG_YN
+			      , EMP_WT)
+		VALUES
+			     ( #{empName}
+			     , #{empMail}
+			     , #{empReg}
+			     , #{empZip}
+			     , #{empAdd1}
+			     , #{empAdd2}
+			     , #{empExadd}
+			     , #{empPw}
+			     , #{empPh}
+			     , #{empNo}
+			     , #{jobCd}
+			     , #{jobGubun}
+			     , SYSDATE
+			     , #{empEnabled}
+			     , #{empFrlgYn}
+			     , '/resources/upload/no_img.jpg')
+	</insert>
+	
+ 	<select id="empMyPage" resultType="empVO">
+	<!-- kr.or.ddit.mapper.EmpMapper.empMyPage 마이 페이지 -->
+ 		SELECT 
+ 			   EMP_NO 
+ 			 , EMP_PH 
+ 			 , EMP_NAME 
+ 			 , EMP_PW 
+ 			 , to_char(EMP_IN,'YYYY-MM-DD') as EMP_IN
+ 			 , EMP_ENABLED 
+ 			 , EMP_OUT 
+ 			 , EMP_MAIL
+ 			 , EMP_REG 
+ 			 , EMP_ENDT
+ 			 , EMP_WT 
+ 			 , EMP_UPDT
+ 			 , EMP_ZIP 
+ 			 , EMP_ADD1 
+ 			 , EMP_ADD2 
+ 			 , EMP_FRLG_YN 
+ 			 , JOB_CD 
+ 			 , EMP_EXADD 
+ 			 , JOB_GUBUN 
+ 	    FROM   EMP 
+ 	    WHERE  EMP_NO=#{empNo} AND EMP_PW=#{empPw} 
+ 	</select>
+ 	
+ 	<!-- 마이페이지 개인정보 변경 -->
+	<update id="myPageUpdate" parameterType="empVO">
+		UPDATE EMP
+		SET    EMP_NAME = #{empName}
+			 , EMP_PH = #{empPh}
+			 , EMP_MAIL = #{empMail}
+			 , EMP_ZIP = #{empZip}
+			 , EMP_ADD1 = #{empAdd1}
+			 , EMP_ADD2 = #{empAdd2}
+			 , EMP_EXADD = #{empExadd}
+			 , EMP_WT = #{empWt}
+		WHERE  EMP_NO = #{empNo}
+	</update> 
+ 	
+ 	
+	
+	<!-- 관리자화면 직원리스트 -->
+	<select id="empList" parameterType="hashMap" resultType="empVO">
+		WITH T AS(
+			SELECT ROW_NUMBER() OVER (ORDER BY EMP_IN DESC) RNUM
+			     , EMP_NO
+			     , EMP_PH
+			     , EMP_NAME
+			     , EMP_PW
+			     , to_char(EMP_IN,'YYYY-MM-DD') as EMP_IN
+			     , EMP_ENABLED
+			     , EMP_OUT
+			     , EMP_MAIL
+			     , EMP_REG
+			     , EMP_ENDT
+			     , EMP_WT
+			     , EMP_UPDT
+			     , EMP_ZIP
+			     , EMP_ADD1
+			     , EMP_ADD2
+			     , EMP_FRLG_YN
+			     , JOB_CD
+			     , EMP_EXADD
+			     , JOB_GUBUN 
+	        FROM   EMP 
+            WHERE  JOB_GUBUN NOT LIKE '관리자'
+       )
+        SELECT * FROM T
+	</select>
+	
+	<!-- 관리자 페이지에서 직원 상세 -->
+	<select id="adminDetail" resultType="empVO">
+		SELECT 
+			   E.EMP_NO
+			 , E.EMP_PH
+			 , E.EMP_NAME
+			 , E.EMP_PW
+			 , to_char(E.EMP_IN,'YYYY-MM-DD') as EMP_IN
+			 , E.EMP_ENABLED
+			 , E.EMP_OUT
+			 , E.EMP_MAIL
+			 , E.EMP_REG
+			 , E.EMP_ENDT
+			 , E.EMP_WT
+			 , E.EMP_UPDT
+			 , E.EMP_ZIP
+			 , E.EMP_ADD1
+			 , E.EMP_ADD2
+			 , E.EMP_FRLG_YN
+			 , E.JOB_CD
+			 , E.EMP_EXADD
+			 , E.JOB_GUBUN
+			 , A.AUTH
+	    FROM   EMP E LEFT OUTER JOIN AUTHORITY A ON(E.EMP_NO = A.EMP_NO)
+	    WHERE  E.EMP_NO=#{empNo}
+	</select>
+		
+	<!-- 비밀번호 변경 -->
+	<update id="pwUpdate" parameterType="empVO">
+		UPDATE EMP
+		SET    EMP_PW = #{empPw}, EMP_FRLG_YN = #{empFrlgYn}
+		WHERE  EMP_NO = #{empNo}
+	</update> 
+	
+	<!-- 비밀번호 찾기 -->
+	<select id="pwSearch" resultType="empVO">
+		SELECT 	EMP_PW
+		FROM    EMP
+		WHERE   EMP_NO = #{empNo} 
+		AND 	EMP_MAIL = #{empMail}
+	</select>
+	
+	<resultMap type="empVO" id="empMap">
+		<!-- emp테이블 -->
+		<result property="empNo" column="EMP_NO" />
+		<result property="empPh" column="EMP_PH" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="empPw" column="EMP_PW" />
+		<result property="empIn" column="EMP_IN" />
+		<result property="empEnabled" column="EMP_ENABLED" />
+		<result property="empOut" column="EMP_OUT" />
+		<result property="empMail" column="EMP_MAIL" />
+		<result property="empReg" column="EMP_REG" />
+		<result property="empEndt" column="EMP_ENDT" />
+		<result property="empWt" column="EMP_WT" />
+		<result property="empUpdt" column="EMP_UPDT" />
+		<result property="empZip" column="EMP_ZIP" />
+		<result property="empAdd1" column="EMP_ADD1" />
+		<result property="empAdd2" column="EMP_ADD2" />
+		<result property="empFrlgYn" column="EMP_FRLG_YN" />
+		<result property="jobCd" column="JOB_CD" />
+		<result property="empExadd" column="EMP_EXADD" />
+		<result property="jobGubun" column="JOB_GUBUN" />
+		<!-- authority테이블 -->
+		<collection property="empAuthVOList" resultMap="authorityMap"></collection>
+		<!-- 직원 이미지 조회 -->
+		<collection property="fileVO" resultMap="fileMap"></collection>
+	</resultMap>
+	
+	<resultMap type="empAuthVO" id="authorityMap">
+		<result property="empNo" column="EMP_NO" />
+		<result property="auth" column="AUTH" />
+	</resultMap>
+	
+	<!-- 직원 이미지 조회 -->
+	<resultMap type="fileVO" id="fileMap">
+		<result property="fileName" column="FILE_NAME" />
+		<result property="anyCd" column="ANY_CD" />
+	</resultMap>
+		
+	<!-- 관리자가 승인시 승인여부 변경 -->
+	<update id="adminUpdate" parameterType="empVO">
+		UPDATE EMP
+		SET    EMP_ENABLED = 'Y'
+		WHERE  EMP_NO = #{empNo}
+	</update>
+	
+	<!-- 관리자 승인시 권한 생성하기 -->
+	<insert id="authorityInsert" parameterType="empVO" >
+		INSERT INTO AUTHORITY
+					(EMP_NO, AUTH)
+		VALUES		(#{empNo}, #{empWt})
+	</insert>
+	
+	<!-- 로그인 -->
+	<select id="read" parameterType="string" resultMap="empMap">
+		SELECT 
+			   A.EMP_NO
+			 , A.EMP_PH
+			 , A.EMP_NAME
+			 , A.EMP_PW
+			 , to_char(A.EMP_IN,'YYYY-MM-DD') as EMP_IN
+			 , A.EMP_ENABLED
+			 , A.EMP_OUT
+			 , A.EMP_MAIL
+			 , A.EMP_REG
+			 , A.EMP_ENDT
+			 , A.EMP_WT
+			 , A.EMP_UPDT
+			 , A.EMP_ZIP
+			 , A.EMP_ADD1
+			 , A.EMP_ADD2
+			 , A.EMP_FRLG_YN
+			 , A.JOB_CD
+			 , A.EMP_EXADD
+			 , A.JOB_GUBUN
+			 , B.AUTH
+	    FROM   EMP A LEFT OUTER JOIN AUTHORITY B ON(A.EMP_NO = B.EMP_NO)
+	    WHERE  A.EMP_NO = #{empNo}
+	</select>
+	
+	<!-- 관리자가 직원 검색하기 -->
+	 <select id="adminSearch" parameterType="empVO" resultType="empVO">
+	
+		SELECT  
+			   EMP_NO
+			 , EMP_PH
+			 , EMP_NAME
+			 , EMP_PW
+			 , to_char(EMP_IN,'YYYY-MM-DD') as EMP_IN
+			 , EMP_ENABLED
+			 , EMP_OUT
+			 , EMP_MAIL
+			 , EMP_REG
+			 , EMP_ENDT
+			 , EMP_WT
+			 , EMP_UPDT
+			 , EMP_ZIP
+			 , EMP_ADD1
+			 , EMP_ADD2
+			 , EMP_FRLG_YN
+			 , JOB_CD
+			 , EMP_EXADD
+			 , JOB_GUBUN
+		FROM   EMP
+		WHERE  1=1
+		AND    JOB_GUBUN NOT LIKE '관리자'
+		AND    (
+				   EMP_NAME LIKE '%' || #{empName} || '%'
+				OR JOB_GUBUN LIKE '%' || #{jobGubun} || '%'
+				)
+		ORDER BY EMP_IN DESC
+	</select>
+	<!-- 관리자 직원리스트 이미지 조회 -->
+	<!-- 
+	<select id="adminImg" parameterType="string" resultType="fileVO">
+		SELECT 
+				FILE_CD
+			  , FILE_NAME
+			  , ANY_CD
+		FROM    ATTACH_FILE
+		WHERE   ANY_CD = #{empNo}
+	</select> 
+	-->
+	
+	<!-- 관리자 직원리스트 이미지 조회 -->
+	<select id="adminImg" resultType="empVO">
+		SELECT 
+				EMP_WT
+		FROM    EMP
+		WHERE   EMP_NO = #{empNo}
+	</select>
+</mapper>
+
+
+
+
+
+
+
+
+

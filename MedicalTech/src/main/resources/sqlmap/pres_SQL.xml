@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace : xml파일은 여러개일 수 있음. 
+이를 구별하기 위한 식별 용도로 사용 -->
+<mapper namespace="kr.or.ddit.mapper.PrescriptionMapper">
+	
+
+<!-- 	<insert id="presRegedit" parameterType="presVO"> -->
+<!-- 		INSERT INTO PRESCRIPTION(PRE_CD, RES_DT, DOCU_CD, CTF_NO, PA_NO, PRE_SHOT, PRE_CNT, PRE_DAYS, DR_CD)  -->
+<!-- 		VALUES ((SELECT NVL(MAX(to_number(PRE_CD)),0)+1 from PRESCRIPTION), SYSDATE,  #{docuCd},  -->
+<!-- 			   ( -->
+<!-- 			   	select max(b.ctf_no) -->
+<!-- 				from CERTIFICATE_ORDER a, medical_document b -->
+<!-- 				where a.ctf_no = b.ctf_no -->
+<!-- 				and b.docu_cd = 'pres' -->
+<!-- 				and b.docu_dt >= SYSDATE-1 -->
+<!-- 				) , #{paNo}, #{preShot}, #{preCnt}, #{preDays}, #{drCd}) -->
+<!-- 	</insert> -->
+
+
+	<update id="presRegedit" parameterType="map">
+		<foreach collection="voList" item="item" index="index" open="INSERT ALL" close="SELECT * FROM DUAL" separator=" ">
+		INTO PRESCRIPTION(PRE_CD, RES_DT, DOCU_CD, CTF_NO, PA_NO, PRE_SHOT, PRE_CNT, PRE_DAYS, DR_CD) 
+		VALUES ((SELECT NVL(MAX(to_number(PRE_CD)),0)+1 from PRESCRIPTION) + #{index}, SYSDATE,  #{item.docuCd}, 
+			   (
+			   	select max(b.ctf_no)
+				from CERTIFICATE_ORDER a, medical_document b
+				where a.ctf_no = b.ctf_no
+				and b.docu_cd = 'pres'
+				and b.docu_dt >= SYSDATE-1
+				) , #{item.paNo}, #{item.preShot}, #{item.preCnt}, #{item.preDays}, #{item.drCd})
+		</foreach>
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+

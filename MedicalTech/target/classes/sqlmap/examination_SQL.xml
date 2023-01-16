@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="kr.or.ddit.mapper.ExaminationMapper">
+	<!-- 대기목록 조회 -->
+	<resultMap type="patientVO" id="patientMap">
+		<result property="paNo" column="PA_NO" />
+		<result property="paReg" column="PA_REG" />
+		<result property="paName" column="PA_NAME" />
+		<result property="paSex" column="PA_SEX" />
+		<result property="paFiviDt" column="PA_FIVI_DT" />
+		<result property="paState" column="PA_STATE" />
+		<result property="paExamState" column="PA_EXAM_STATE" />
+		<collection property="toVO" resultMap="toListMap"></collection>
+		<collection property="rcpVO" resultMap="rcpMap"></collection>
+	</resultMap>
+	
+	<resultMap type="toVO" id="toListMap">
+		<result property="toGubun" column="TO_GUBUN" />
+	</resultMap>
+	
+	<resultMap type="rcpVO" id="rcpMap">
+		<result property="rcpTm" column="RCP_TM" />
+	</resultMap>
+	
+	<select id="main" resultMap="patientMap">
+	    SELECT DISTINCT P.PA_NO, P.PA_REG ,P.PA_NAME, P.PA_SEX, P.PA_FIVI_DT, P.PA_STATE, T.TO_GUBUN, P.PA_EXAM_STATE, R.RCP_TM
+	    FROM PATIENT P, TEST_ORDER T, RECEIPT R
+	    WHERE P.PA_NO = T.PA_NO
+	    AND   R.PA_NO = P.PA_NO
+	    AND   P.PA_STATE = '진료중'
+	    AND   T.TO_GUBUN = '검사'
+	    AND   TO_CHAR(R.RCP_TM, 'YY/MM/DD') = TO_CHAR(SYSDATE, 'YY/MM/DD')
+	    ORDER BY R.RCP_TM DESC
+ 	</select>
+ 	
+ 	<!-- 환자 상태 Update -->
+ 	<update id="patiUdp" parameterType="String">
+ 		UPDATE PATIENT 
+ 		SET	   PA_STATE = '검사완료'	
+ 		WHERE  PA_NO = #{paNo}
+ 	</update>
+ 	
+	<!-- 검색으로 환자 조회 -->
+	<select id="paSearch" parameterType="String" resultType="patientVO">
+		SELECT PA_NO, PA_REG ,PA_NAME, PA_SEX, PA_PH, PA_FIVI_DT, PA_STATE
+ 		FROM   PATIENT
+ 		WHERE  PA_NAME LIKE '%' || #{paName} || '%'
+ 	</select>
+
+	<!-- 환자 검사상태를 Update -->
+	<update id="stateUpd" parameterType="String">
+		UPDATE PATIENT
+		SET    PA_EXAM_STATE = '검사중'
+		WHERE  PA_NO = #{paNo}
+	</update>
+	
+	<!-- 환자 검사상태를 Cancle -->
+	<update id="stateCancle" parameterType="String">
+		UPDATE PATIENT
+		SET    PA_EXAM_STATE = '검사시작'
+		WHERE  PA_NO = #{paNo}
+	</update>
+	
+	<!-- 환자 검사상태를 Complete -->
+	<update id="stateComplete" parameterType="String">
+		UPDATE PATIENT
+		SET    PA_EXAM_STATE = '검사완료'
+		WHERE  PA_NO = #{paNo}
+	</update>
+
+	<!-- 대기목록 조회한 환자 정보 -->
+	<select id="patiInfo" parameterType="String" resultType="patientVO">
+		SELECT PA_NO, PA_REG ,PA_NAME, PA_SEX, PA_PH, PA_FIVI_DT, PA_STATE
+ 		FROM PATIENT
+ 		WHERE PA_NO = #{paNo}
+ 	</select>
+
+	<resultMap type="ordVO" id="orderMap">
+		<result property="olDisKo" column="OL_DIS_KO" />
+		<result property="olActEng" column="OL_ACT_ENG" />
+		<result property="olActFee" column="OL_ACT_FEE" />
+		<collection property="toVO" resultMap="toMap"></collection>
+	</resultMap>
+	
+	<resultMap type="toVO" id="toMap">
+		<result property="toOrNo" column="TO_OR_NO" />
+		<result property="olCd" column="OL_CD" />
+		<result property="toExamArea" column="TO_EXAM_AREA" />
+		<result property="toState" column="TO_STATE" />
+	</resultMap>
+
+	<!-- 오더 내역 조회 --> 
+	<select id="order" parameterType="patientVO" resultMap="orderMap">
+		SELECT A.OL_DIS_KO, A.OL_ACT_ENG, A.OL_ACT_FEE, B.TO_OR_NO, B.OL_CD, B.TO_EXAM_AREA
+		FROM   ORDER_LIST A, TEST_ORDER B
+		WHERE  A.OL_CD = B.OL_CD
+		AND    B.PA_NO = #{paNo}
+		AND    B.TO_STATE = '진행중'
+		AND    B.TO_GUBUN = '검사'
+	</select>
+	
+	<!-- 오더 내역 카운트 -->
+	<select id="orderCnt" parameterType="String" resultType="int">
+		SELECT COUNT(OL_CD) FROM TEST_ORDER
+		WHERE PA_NO = #{paNo}
+		AND   TO_STATE = '진행중'
+		AND   TO_GUBUN = '검사'
+	</select>
+	
+	<!-- 오더 내역 Update -->
+	<update id="orderUpd" parameterType="String">
+		UPDATE  TEST_ORDER
+		SET    TO_STATE = '오더완료'
+		WHERE  TO_OR_NO = #{toOrNo}
+	</update>
+	
+	<!-- 공통 코드 SELETCED -->
+	<select id="comSelect" resultType="ccdVO">
+		SELECT CCD_CD, CCD_NAME, CCD_CONT, CCD_YN, CCD_SEQ, CCD_INDT, CCD_INID, CCD_UPDT, CCD_UPID, CC_CD FROM COM_CODE_DETAIL WHERE CCD_YN = 'Y'
+	</select>
+	
+	<!-- 검사내역 조회 -->
+	<select id="examList" parameterType="String" resultType="examinationVO">
+		SELECT A.EXAM_CD, A.EXAM_FEE, A.EXAM_DT, A.EXAM_NAME, A.EXAM_BODPT, B.Pa_No  FROM EXAMINATION A, TEST_ORDER B
+		WHERE A.TO_OR_NO = B.TO_OR_NO
+		AND B.PA_NO = #{paNo}
+		ORDER BY A.EXAM_DT DESC
+	</select>
+	
+	<!-- 검사 내역 입력 -->
+	<insert id="examInsert" parameterType="examinationVO">
+		<selectKey order="BEFORE" keyProperty="examCd" resultType="string">
+			SELECT NVL(MAX(EXAM_CD),202000)+1 FROM EXAMINATION
+		</selectKey>
+		INSERT INTO EXAMINATION(EXAM_CD, EXAM_FEE, EXAM_DT
+					, EXAM_NAME, FILE_CD, EXAM_BODPT, TO_OR_NO, PA_NO)
+		VALUES(
+		#{examCd},#{examFee},SYSDATE,#{examName},null,#{examBodpt},#{toOrNo},#{paNo})
+	</insert>
+
+	<!-- 
+		 다중 insert 시 update 태그를 사용하자
+		 드루와 : List<attachVO> attachVOList
+		 가즈아 : insert, update, delete의 경우 resultType은 생략
+	 -->
+	<update id="uploadAjaxAction" parameterType="java.util.List">
+		<foreach collection="list" item="fileVO" open="INSERT ALL" close="SELECT * FROM DUAL" separator=" ">
+			INTO ATTACH_FILE(FILE_CD, FILE_NAME, ANY_CD, FILE_DT) 
+			VALUES (#{fileVO.fileCd}, #{fileVO.fileName} , #{fileVO.anyCd}, SYSDATE)
+		</foreach>
+	</update>
+	
+	<!--
+		 파라미터 : String bookId 
+		 책의 이미지인 ATTACH 테이블의 다음 seq번호 가져오기	 
+	-->
+	<select id="getSeq" parameterType="String" resultType="int">
+		SELECT NVL(MAX(FILE_CD), 0) + 1 FROM ATTACH_FILE WHERE ANY_CD = #{anyCd}
+	</select>
+	
+	<!-- 검사내역 X-ray 이미지 파일 모달창으로 보기 -->
+	<select id="searchImg" parameterType="String" resultType="fileVO">
+		SELECT FILE_NAME, FILE_CD, ANY_CD
+		FROM  ATTACH_FILE
+		WHERE ANY_CD = #{examCd}
+	</select>
+	
+	<!-- 파일 다운로드에 환자명과 검사날짜 기입 -->
+	<resultMap type="examinationVO" id="downMap">
+		<result property="examDt" column="EXAM_DT" />
+		<collection property="patientVO" resultMap="paMap"></collection>
+	</resultMap>
+	
+	<resultMap type="patientVO" id="paMap">
+		<result property="paName" column="PA_NAME" />
+		<result property="paNo" column="PA_NO" />
+	</resultMap>
+	
+	<select id="downloadName" parameterType="String" resultMap="downMap">
+		SELECT P.PA_NAME, E.EXAM_DT, P.PA_NO
+		FROM   PATIENT P, EXAMINATION E
+		WHERE  P.PA_NO = E.PA_NO
+		AND    E.EXAM_CD = #{anyCd}
+	</select>
+	
+</mapper>	

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC 
+"-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" 
+"http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<!-- tiles 설정 -->
+<tiles-definitions>
+	<!-- main layout -->
+	<definition name="tiles-layout" template="/WEB-INF/views/tiles/index.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/tiles/header.jsp" />
+		<put-attribute name="aside" value="/WEB-INF/views/tiles/aside.jsp" />
+		<put-attribute name="body" value="" />
+	</definition>
+	<definition name="baseEmpty" template="/WEB-INF/views/tiles/index2.jsp">
+		<put-attribute name="body" value="" />
+	</definition>
+	<!-- name의 */*은 body의 value에서 1과 2에 해당
+		controller에서 forwarding 시 return "1/2";
+	 -->
+	<definition name="*/*" extends="tiles-layout">
+		<put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+	</definition>
+	
+	<definition name="tiles-layout-one" template="/WEB-INF/views/tiles/index.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/tiles/header.jsp" />
+		<put-attribute name="aside" value="/WEB-INF/views/tiles/aside.jsp" />
+		<put-attribute name="body" value="" />
+	</definition>
+	<definition name="home" extends="tiles-layout-one">
+		<put-attribute name="body" value="/WEB-INF/views/home.jsp" />
+	</definition>
+	
+	<!-- aside, header 없는 거 -->
+	<definition name="security/loginForm" extends="baseEmpty">
+		<put-attribute name="body" value="/WEB-INF/views/security/loginForm.jsp" />
+	</definition>
+	<definition name="emp/join" extends="baseEmpty">
+		<put-attribute name="body" value="/WEB-INF/views/emp/join.jsp" />
+	</definition>
+	<definition name="emp/logout" extends="baseEmpty">
+		<put-attribute name="body" value="/WEB-INF/views/security/loginForm.jsp" />
+	</definition>
+	<definition name="main/main" extends="baseEmpty">
+		<put-attribute name="body" value="/WEB-INF/views/main/main.jsp" />
+	</definition>
+	
+</tiles-definitions>
+
+
+
+
+
+
+
+

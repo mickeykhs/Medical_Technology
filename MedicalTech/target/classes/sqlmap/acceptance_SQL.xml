@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace : xml파일은 여러개일 수 있음. 
+이를 구별하기 위한 식별 용도로 사용 -->
+<mapper namespace="kr.or.ddit.mapper.AcceptanceMapper">
+	
+	<!-- 대기 목록 환자 조회 -->
+	<select id="patiWait" resultType="patientVO">
+		SELECT DISTINCT P.PA_NO, P.PA_REG, P.PA_NAME, P.PA_PH, P.PA_ADD1, P.PA_ADD2, P.PA_FIVI_DT, P.PA_STATE, P.PA_INSU_YN, MAX(R.RCP_TM) 
+		FROM   PATIENT P, RECEIPT R
+		WHERE  P.PA_STATE = '진료완료'
+		AND    TO_CHAR(R.RCP_TM, 'YYMMDD') = TO_CHAR(SYSDATE, 'YYMMDD')
+		AND    P.PA_NO = R.PA_NO
+		GROUP BY P.PA_NO, P.PA_REG, P.PA_NAME, P.PA_PH, P.PA_ADD1, P.PA_ADD2, P.PA_FIVI_DT, P.PA_STATE, P.PA_INSU_YN
+		ORDER BY MAX(R.RCP_TM) DESC
+	</select>
+	
+	<!-- 환자 검색으로 환자 조회 -->
+	<select id="paSearch" parameterType="String" resultType="patientVO">
+		SELECT PA_NO, PA_REG ,PA_NAME, PA_PH, PA_ADD1, PA_ADD2, PA_FIVI_DT
+ 		FROM   PATIENT
+ 		WHERE  PA_NAME LIKE '%' || #{paName} || '%'
+	</select>
+	
+	<!-- 검사,처치 오더에 대한 금액 조회 -->
+	<resultMap type="ordVO" id="orderFeeMap">
+		<result property="olActKo" column="OL_ACT_KO" />
+		<result property="olActFee" column="OL_ACT_FEE" />
+		<collection property="toVO" resultMap="toMap"></collection>
+		<collection property="chartVO" resultMap="chartMap"></collection>
+		<collection property="empVO" resultMap="empMap"></collection>
+	</resultMap>
+	
+	<resultMap type="toVO" id="toMap">
+		<result property="toGubun" column="TO_GUBUN" />
+	</resultMap>
+	
+	<resultMap type="chartVO" id="chartMap">
+		<result property="chDt" column="CH_DT" />
+	</resultMap>
+	
+	<resultMap type="empVO" id="empMap">
+		<result property="empName" column="EMP_NAME" />
+	</resultMap>
+
+	<select id="orderFee" parameterType="String" resultMap="orderFeeMap">
+			SELECT  O.OL_ACT_KO, O.OL_ACT_FEE, T.TO_GUBUN, C.CH_DT, E.EMP_NAME
+			FROM    ORDER_LIST O, TEST_ORDER T, CHART C, EMP E, PATIENT P
+			WHERE   O.OL_CD = T.OL_CD 
+			AND     T.PA_NO = C.PA_NO
+			AND     C.EMP_NO = E.EMP_NO
+			AND     C.PA_NO = P.PA_NO
+			AND     C.PA_NO = #{paNo}
+			AND     C.CH_DT >= SYSDATE - 1
+			AND     P.PA_STATE = '진료완료'
+	</select>
+
+
+	<!-- 진단서 금액 조회 -->
+	<resultMap type="diaVO" id="diaFeeMap">
+		<result property="diaCd" column="DIA_CD" />
+		<result property="diaPmtPrice" column="DIA_PMT_PRICE" />
+		<result property="diaDt" column="DIA_DT" />
+		<collection property="ctforVO" resultMap="certiDiaMap"></collection>
+	</resultMap>
+	
+	<resultMap type="ctforVO" id="certiDiaMap">
+		<result property="ctfGubun" column="CTF_GUBUN" />
+		<result property="ctfName" column="CTF_NAME" />
+		<result property="empName" column="EMP_NAME" />
+	</resultMap>
+
+	<select id="diaFee" parameterType="String" resultMap="diaFeeMap">
+		SELECT C.CTF_GUBUN, C.CTF_NAME, C.EMP_NAME, D.DIA_PMT_PRICE, D.DIA_DT, D.DIA_CD
+		FROM   CERTIFICATE_ORDER C, MEDICAL_DOCUMENT M, DIAGNOSIS D, PATIENT P
+		WHERE  C.CTF_NO = D.CTF_NO
+		AND    D.DOCU_CD = M.DOCU_CD
+		AND    P.PA_NO = D.PA_NO
+		AND    D.PA_NO = #{paNo}
+		AND    D.DIA_DT >= SYSDATE -1
+		AND    P.PA_STATE = '진료완료'
+	</select> 
+	
+	<!-- 소견서 금액 조회 -->	
+	<resultMap type="noteVO" id="noteFeeMap">
+		<result property="ntCd" column="NT_CD" />
+		<result property="ntPmtPrice" column="NT_PMT_PRICE" />
+		<result property="ntDt" column="NT_DT" />
+		<collection property="ctforVO" resultMap="certiNoteMap"></collection>
+	</resultMap>
+	
+	<resultMap type="ctforVO" id="certiNoteMap">
+		<result property="ctfGubun" column="CTF_GUBUN" />
+		<result property="ctfName" column="CTF_NAME" />
+		<result property="empName" column="EMP_NAME" />
+	</resultMap>
+	
+	<select id="noteFee" parameterType="String" resultMap="noteFeeMap">
+		SELECT C.CTF_GUBUN, C.CTF_NAME, C.EMP_NAME, N.NT_PMT_PRICE, N.NT_DT, N.NT_CD
+		FROM   CERTIFICATE_ORDER C, MEDICAL_DOCUMENT M, NOTE N, PATIENT P
+		WHERE  C.CTF_NO = N.CTF_NO
+		AND    N.DOCU_CD = M.DOCU_CD
+		AND    P.PA_NO = N.PA_NO
+		AND    N.PA_NO = #{paNo}
+		AND    N.NT_DT >= SYSDATE -1
+		AND    P.PA_STATE = '진료완료'
+	</select>
+	
+	<!-- 수납 내역 등록 -->
+	<insert id="insertRec" parameterType="recVO">
+		<selectKey order="BEFORE" keyProperty="recCd" resultType="string">
+			SELECT SUBSTR(NVL(MAX(REC_CD),'R000'),1,1) || TRIM(TO_CHAR(SUBSTR(NVL(MAX(REC_CD),'R000'),2) + 1, '000')) FROM RECEIPTION
+		</selectKey>
+		
+		INSERT INTO RECEIPTION (REC_CD, REC_YN, REC_MT, REC_TOTAL, REC_DT, REC_EMP_NO, DIA_CD, NT_CD, PA_NO, PA_INSU_YN)
+		VALUES ((SELECT SUBSTR(NVL(MAX(REC_CD),'R000'),1,1) || TRIM(TO_CHAR(SUBSTR(NVL(MAX(REC_CD),'R000'),2) + 1, '000')) FROM RECEIPTION),
+		'Y', #{recMt}, #{recTotal}, SYSDATE, #{recEmpNo}, #{diaCd}, #{ntCd}, #{paNo}, #{paInsuYn})
+	</insert>
+	
+	
+	<!-- 수납 등록시 환자 상태 변화  -->
+	<update id="updateRec" parameterType="recVO">
+		UPDATE PATIENT
+		SET PA_STATE = '결제완료'
+		WHERE PA_NO = #{paNo}
+	
+	</update>
+	
+	<!-- 수납 이력 조회 -->
+	<resultMap type="recVO" id="recMap">
+		<result property="recCd" column="REC_CD" />
+		<result property="recYn" column="REC_YN" />
+		<result property="recMt" column="REC_MT" />
+		<result property="recTotal" column="REC_TOTAL" />
+		<result property="recDt" column="REC_DT" />
+		<result property="recEmpNo" column="REC_EMP_NO" />
+		<result property="diaCd" column="DIA_CD" />
+		<result property="ntCd" column="NT_CD" />
+		<result property="paNo" column="PA_NO" />
+		<result property="paInsuYn" column="PA_INSU_YN" />
+		<collection property="patientVO" resultMap="paNameMap"></collection>
+	</resultMap>
+	
+	<resultMap type="patientVO" id="paNameMap">
+		<result property="paName" column="PA_NAME" />
+	</resultMap>
+	
+	<!-- 환자별 수납 이력 조회 -->
+	<select id="recList" parameterType="String" resultMap="recMap">
+		SELECT R.REC_CD, R.REC_YN, R.REC_MT, R.REC_TOTAL, R.REC_DT, R.REC_EMP_NO, R.DIA_CD, R.NT_CD, R.PA_INSU_YN, P.PA_NAME
+		FROM   RECEIPTION R, PATIENT P
+		WHERE  R.PA_NO = P.PA_NO  
+		AND    R.PA_NO = #{paNo}
+		ORDER BY R.REC_DT DESC
+	</select>
+	
+	<!-- 날짜별 수납이력 조회 -->
+	<select id="recDt" parameterType="String" resultMap="recMap">
+		SELECT R.REC_CD, R.REC_YN, R.REC_MT, R.REC_TOTAL, R.REC_DT, R.REC_EMP_NO, R.DIA_CD, R.NT_CD, R.PA_INSU_YN, P.PA_NAME
+		FROM   RECEIPTION R, PATIENT P
+		WHERE  R.PA_NO = P.PA_NO  
+		AND    TO_CHAR(R.REC_DT, 'YY/MM/DD') = TO_DATE(#{recDt}, 'YY/MM/DD')
+		ORDER BY R.REC_CD DESC
+	</select>
+	
+	<!-- 금일 수납이력 조회 -->
+	<select id="recToday" resultMap="recMap">
+		SELECT R.REC_CD, R.REC_YN, R.REC_MT, R.REC_TOTAL, R.REC_DT, R.REC_EMP_NO, R.DIA_CD, R.NT_CD, R.PA_INSU_YN, P.PA_NAME
+		FROM   RECEIPTION R, PATIENT P
+		WHERE  R.PA_NO = P.PA_NO 
+		AND    TO_CHAR(R.REC_DT, 'YY/MM/DD') = TO_CHAR(SYSDATE, 'YY/MM/DD')
+		ORDER BY R.REC_CD DESC
+	</select>
+	
+	<!-- 결제 영수증에 들어갈 Data 조회 -->
+	<select id="reciept" resultType="recVO">
+		SELECT REC_CD, REC_DT, REC_EMP_NO
+		FROM   RECEIPTION
+		WHERE  REC_CD = (SELECT MAX(REC_CD) FROM RECEIPTION)
+	</select>
+	
+	<!-- 진료실 조회 -->
+	<resultMap type="doVO" id="docMap">
+		<result property="docNo" column="DOC_NO" />
+		<collection property="rcpVO" resultMap="rcpMap"></collection>
+		<collection property="empVO" resultMap="empMap"></collection>
+	</resultMap>
+	
+	<resultMap type="rcpVO" id="rcpMap">
+		<result property="paNo" column="PA_NO" />
+	</resultMap>
+	
+	<select id="docOff" parameterType="String" resultMap="docMap">
+		SELECT D.DOC_NO
+		FROM   EMP E, DOC_OFFICE D, RECEIPT R
+		WHERE  E.EMP_NO = D.EMP_NO
+		AND    D.DOC_CD = R.DOC_CD
+		AND    E.EMP_NAME = #{empName}
+		AND    R.PA_NO = #{paNo}
+		AND    R.RCP_TM >= SYSDATE - 1
+	</select>
+	
+</mapper>

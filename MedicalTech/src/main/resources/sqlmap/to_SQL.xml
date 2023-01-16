@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace : xml파일은 여러개일 수 있음. 
+이를 구별하기 위한 식별 용도로 사용 -->
+<mapper namespace="kr.or.ddit.mapper.TestOrderMapper">
+	
+	<!-- 상세오더 등록 -->
+<!-- 	<insert id="toRegedit" parameterType="toVO" > -->
+<!-- 		INSERT INTO TEST_ORDER (OL_CD, TO_DIS_CD, OL_ACT_CD, CH_NO, TO_OR_NO, TO_GUBUN, PA_NO, PR_SHOT, PR_CNT) -->
+<!-- 		VALUES(#{olCd}, #{toDisCd}, #{olActCd}, #{chNo}, (SELECT NVL(MAX(TO_OR_NO)+1,1) FROM TEST_ORDER),  -->
+<!-- 		#{toGubun}, #{paNo}, #{prShot}, #{prCnt}) -->
+<!-- 	</insert> -->
+	
+	<!-- 
+		 다중 insert 시 update 태그를 사용하자
+		 드루와 : List<attachVO> attachVOList
+		 가즈아 : insert, update, delete의 경우 resultType은 생략
+	 -->
+	 
+	<update id="injRegedit" parameterType="map">
+		<foreach collection="voList" item="item" index="index" open="INSERT ALL" close="SELECT * FROM DUAL" separator=" ">
+			INTO TEST_ORDER(OL_CD, TO_DIS_CD, OL_ACT_CD, CH_NO, TO_OR_NO, TO_GUBUN, PA_NO, PR_SHOT, PR_CNT, TO_EXAM_AREA) 
+			VALUES (#{item.olCd}, #{item.toDisCd}, #{item.olActCd}, #{item.chNo},  (SELECT NVL(MAX(to_number(TO_OR_NO)),0)+1 from TEST_ORDER) + #{index} , 
+			#{item.toGubun}, #{item.paNo}, #{item.prShot}, #{item.prCnt}, #{item.toExamArea})
+		</foreach>
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+

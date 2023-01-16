@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.DsMapper">
+
+	<!-- 의사의 스케줄 목록 가져오기 -->
+	<!-- 환자번호,진료실번호, 증상메모,진료시작시간,진료종료시간, 환자이름 -->
+	<select id="findAll" resultType="dsVO">
+		SELECT D.PA_NO,D.DOC_CD,D.DS_MEMO,D.DS_ST_TM, D.DS_FI_TM,D.DS_NO,P.PA_NAME,D.EMP_NO,E.EMP_NAME
+		FROM DOC_SCHEDULE D, PATIENT P, EMP E
+        WHERE D.PA_NO = P.PA_NO 
+        AND D.EMP_NO = E.EMP_NO
+	</select>
+	
+	<!-- 스케줄 등록 -->
+	<insert id="insert" parameterType="dsVO">
+	INSERT INTO
+	DOC_SCHEDULE(DS_NO,PA_NO,DOC_CD,DS_MEMO,DS_ST_TM,DS_FI_TM,EMP_NO,DS_ENDT)
+	VALUES((SELECT NVL(MAX(to_number(DS_NO)),0)+1 from DOC_SCHEDULE),#{paNo},'O001',#{dsMemo},#{dsStTm},#{dsFiTm},#{empNo},sysdate)
+	</insert>
+	
+	<!-- 스케줄 삭제 -->
+	<delete id="delete" parameterType="String">
+	DELETE FROM DOC_SCHEDULE WHERE DS_ST_TM = #{data}
+	</delete>
+	
+	<!-- 스케줄 수정 -->
+	<update id="update" parameterType="dsVO">
+		UPDATE DOC_SCHEDULE
+		SET DS_ST_TM = #{dsStTm},
+		DS_FI_TM = #{dsFiTm},
+		EMP_NO = #{empNo}
+		WHERE DS_ST_TM = #{dsOldStTm}
+	</update>
+	
+	<!-- 검색으로 환자 조회 -->
+	<select id="paSer" parameterType="patientVO" resultType="patientVO">
+		SELECT PA_NO,PA_NAME, PA_PH, PA_REG
+ 		FROM   PATIENT
+ 		WHERE  PA_NAME LIKE '%' || #{paName} || '%'
+ 	</select>
+
+	<!-- 모달 update -->
+	<update id="upModal" parameterType="dsVO">
+		UPDATE DOC_SCHEDULE
+		SET DS_ST_TM = #{dsStTm},
+		DS_FI_TM = #{dsFiTm},
+		EMP_NO = #{empNo},
+		DS_MEMO = #{dsMemo},
+		PA_NO = #{paNo}
+		WHERE DS_NO = #{dsNo}
+	</update>
+	
+</mapper>

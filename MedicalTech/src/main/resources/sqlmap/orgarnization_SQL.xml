@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="kr.or.ddit.mapper.OrganizationMapper">
+	
+	<!-- 직원 조회(이미지 포함) 
+	<resultMap type="empVO" id="empMap">
+		<result property="empNo" column="EMP_NO" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="jobGubun" column="JOB_GUBUN" />
+		<result property="empPh" column="EMP_PH" />
+		<result property="empWt" column="EMP_WT" />
+		<collection property="fileVO" resultMap="fileMap"></collection>
+	</resultMap>
+	
+	<resultMap type="fileVO" id="fileMap">
+		<result property="fileName" column="FILE_NAME" />
+		<result property="anyCd" column="ANY_CD" />
+	</resultMap>
+	-->
+	
+	<select id="list" resultType="empVO">
+		SELECT EMP_NO, EMP_NAME, JOB_GUBUN, EMP_PH, EMP_WT
+		FROM   EMP
+		WHERE  EMP_ENABLED = 'Y'
+ 	</select>
+ 	
+	<!-- 직원 상세 정보 조회 -->
+	<select id="detail" parameterType="String" resultType="empVO">
+		SELECT EMP_NO, EMP_PH, EMP_NAME, EMP_PW, EMP_IN, EMP_OUT, 
+			   EMP_MAIL, EMP_REG, JOB_CD, EMP_ENDT, EMP_WT,
+			   EMP_ZIP, EMP_ADD1, EMP_ADD2, JOB_GUBUN
+ 		FROM   EMP
+ 		WHERE  EMP_NO = #{empNo}
+ 	</select>
+ 	
+ 	<!-- 직원 이미지 조회 -->
+ 	<select id="empImg" parameterType="String" resultType="empVO">
+		SELECT EMP_WT
+		FROM   EMP
+		WHERE  EMP_NO = #{empNo} 	
+ 	</select>
+ 	
+ 	<!-- 직원 정보 수정 -->
+ 	<update id="updatePost" parameterType="empVO">
+ 		UPDATE EMP 
+		SET    EMP_NAME = #{empName}, EMP_PH = #{empPh}, EMP_MAIL = #{empMail}, EMP_ADD1 = #{empAdd1}, EMP_ADD2 = #{empAdd2}
+		WHERE  EMP_NO = #{empNo}
+ 	</update>
+
+ 	<!-- 직원 정보 삭제 -->
+ 	<update id="deletePost" parameterType="String">
+ 		UPDATE EMP
+ 		SET    EMP_ENABLED = 'N'
+ 		WHERE  EMP_NO = #{empNo}
+ 	</update>
+</mapper>	
